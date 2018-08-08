@@ -22,12 +22,24 @@
 
             // received mouse/keyboard inputs coming from websockets & originating from serial
             socket.on('message', function(message) {
-                alert('server message : ' + message);
+                console.log('server message : ' + message);
+                // parse the coming data
+                var dataObj = JSON.parse(data);
+                if(Object.keys(dataObj)[0] === 'wsmouse.send'){
+                  // TODO: simulate a mouse evt ( move, button click, .. )
+                } else if (Object.keys(dataObj)[0] === 'wskeyboard.tap'){
+                  // TODO: simulate a key evt ( press, release, )
+                }
+                // wsmouse:
+                // { 'wsmouse.send': ([b&7,x,y,s] }
+                // wskeyboard
+                // { 'wskeyboard.setModifiers': ([modifiers] } - won't be used ;P => should originally use 'E.sendUSBHID' ?
+                // { 'wskeyboard.tap': ([modifiers,0,key] }
+                // { 'wskeyboard.type': ([b&7,x,y,s] } - won't be used ;) => acts internally to the module
             });
             
             // == keyboard ==
             // setModifier
-            
             // tap
             // type
             
