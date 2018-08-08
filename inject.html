@@ -12,8 +12,8 @@
 
 
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-        <!-- <script src="/socket.io/socket.io.js"></script> --> <!-- when served from nodejs server -->
-        <script src="http://localhost:8080/socket.io/socket.io.js"></script> <!-- when injected into a page not served by nodejs server -->
+        <script src="/socket.io/socket.io.js"></script> <!-- when served from nodejs server -->
+        <!-- <script src="http://localhost:8080/socket.io/socket.io.js"></script> --> <!-- when injected into a page not served by nodejs server -->
         <script>
             // store mouse x,y position
             // updated by moving the cursor using a laptop's trackpad
@@ -148,8 +148,8 @@
             //socket.emit('stuff', data);
 
             // received mouse/keyboard inputs coming from websockets & originating from serial
-            socket.on('message', function(message) {
-                console.log('server message : ' + message);
+            socket.on('wsmessage', function(data) {
+                console.log('server message : ' + data);
                 // parse the coming data
                 var dataObj = JSON.parse(data);
                 if(Object.keys(dataObj)[0] === 'wsmouse.send'){ // wsmouse: { 'wsmouse.send': ([btn,x,y,s] }
@@ -204,7 +204,7 @@
                     
                   // TODO: simulate a key evt ( keydown, keypress, keyup )
                   var keyboardEvent = document.createEvent('KeyboardEvent');
-                  keyboardEvent.initKeyEvent(
+                  keyboardEvent.initKeyboardEvent(
                     keyEvtType, // typeArg ( keydown, keyup, keypress )                                                        
                     true, // canBubbleArg
                     true, // cancelableArg
@@ -221,7 +221,9 @@
                 }
             });
             
-            
+            // quickly test server logs
+            var testBtn = document.querySelector('input');
+            testBtn.click = function(){ socket.emit('message', 'test btn clicked in served webpage inject.html !') };
         </script>
     </body>
 </html>
