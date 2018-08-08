@@ -24,6 +24,14 @@
               mousePosition = { x: e.clientX, y: e.clientY};
             });
             
+            // mouse buttons map - to convert from L: 1, R: 2, M: 4 to L: 0, R: 2, M: 1
+            var wsMouseBtnsMap = function(btn){
+              if(btn === 0) return -1; // None
+              else if(btn === 1) return 0; // Left btn
+              else if (btn === 4) return 1; // // Middle btn
+              else return btn; // Right btn
+            }
+            
             var socket = io.connect('http://localhost:8080');
 
             // data = 'test';
@@ -37,6 +45,13 @@
                 if(Object.keys(dataObj)[0] === 'wsmouse.send'){ // wsmouse: { 'wsmouse.send': ([btn,x,y,s] }
                   // TODO: get current mouse position
                   var currMousePos = mousePosition;
+                  
+                  // TODO: parse the wsmouse.send evt data
+                  var wsMouseEvtData = dataObj[ Object.keys(dataObj)[0] ];
+                  var wsMouseData = { x: wsMouseEvtData[0], y: wsMouseEvtData[1], btn: wsMouseEvtData[2], wheel: wsMouseEvtData[3] };
+                  console.log('wsMouseData: ' + wsMouseData);
+                  var wsMouseBtn = wsMouseBtnsMap( wsMouseData.btn ); // /!\ -1 means None
+                  
                   // TODO: simulate a mouse evt ( move, button click, .. )
                   var mouseEvent = document.createEvent("MouseEvents");
                   mouseEvent.initMouseEvent(
@@ -45,21 +60,28 @@
                     false, //cancelable
                     window, //event's AbstractView : should be window 
                     0, // detail : Event's mouse click count 
-                    mousePosition.x + x, // screenX
-                    mousePosition.y + y, // screenY
-                    mousePosition.x + x, // clientX
-                    mousePosition.y + y, // clientY
+                    mousePosition.x + wsMouseData.x, // screenX
+                    mousePosition.y + wsMouseData.y, // screenY
+                    mousePosition.x + wsMouseData.x, // clientX
+                    mousePosition.y + wsMouseData.y, // clientY
                     false, // ctrlKey
                     false, // altKey
                     false, // shiftKey
                     false, // metaKey 
-                    0, // button : 0 = click, 1 = middle button, 2 = right button  
+                    0, // button : 0 = left button, 1 = middle button, 2 = right button  
                     null // relatedTarget : Only used with some event types (e.g. mouseover and mouseout). In other cases, pass null.
                   );
                   document.dispatchEvent(mouseEvent);
                   //document.querySelector('canvas').dispatchEvent(mouseEvent); // always good to remember ;)
                     
                 } else if (Object.keys(dataObj)[0] === 'wskeyboard.tap'){ // wskeyboard: { 'wskeyboard.tap': ([modifiers,key] }
+                  // TODO: parse the wskeyboard.tap evt data
+                  var wsKeyboardEvtData = dataObj[ Object.keys(dataObj)[0] ];
+                  var wsKeyboardData = { modifiers: wsKeyboardEvtData[0], key: wsKeyboardEvtData[1] };
+                  console.log('wsKeyboardData: ' + wsKeyboardData);
+                  var wsKeyboardKey = wsKeyboardKeysMap( wsKeyboardData.key ); // /!\ either re-write export.KEYS or write another 'mapping' fcn
+                  // TODO: parse the bitwise-mapped modifiers
+                    
                   // TODO: simulate a key evt ( press, release, )
                   var keyboardEvent = document.createEvent('KeyboardEvent');
                   keyboardEvent.initKeyEvent(
