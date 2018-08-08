@@ -33,6 +33,15 @@
             }
             
             // reverse key map ( so as to keep the original key values untouched for debugging puroses )
+            /* R:
+            document.onkeypress= function(event){
+              event = event || window.event;
+              var keyCode = event.which || event.keyCode;
+              var typedChar = String.fromCharCode(keyCode);
+              var key = event.key;
+              console.log('keyCode: ' + keyCode + ' => ' + key)
+            }
+            */
             var revKeyMap = {
               '4': 97,    // A
               '5': 98,    // B
