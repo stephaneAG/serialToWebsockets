@@ -15,10 +15,27 @@ var server = http.createServer(function(req, res) {
     });
 });
 
+// serial port
+port.on('open', function(){
+  console.log('serialport connected');
+});
+port.on('data', function(data){
+  console.log('serialport data:' + data);
+  // parse the data OR directly send over ws to client ?
+  if( theClient !== undefined ){
+     socket.emit('message', data); // forward any serial data to websockets as 'message' evt 
+  }
+});
+
+
 // websockets
 var io = require('socket.io').listen(server);
 
+var theClient = undefined;
 io.sockets.on('connection', function (socket, pseudo) {
+    // store socket
+    theClient = socket;
+    
     // send msg on connect
     socket.emit('message', 'Connected');
     // signal other clients there's a newcomer
