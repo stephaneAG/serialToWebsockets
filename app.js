@@ -21,9 +21,10 @@ port.on('open', function(){
 });
 port.on('data', function(data){
   console.log('serialport data:' + data);
-  // parse the data OR directly send over ws to client ?
-  if( theClient !== undefined ){
-     socket.emit('message', data); // forward any serial data to websockets as 'message' evt 
+    
+  // directly send over ws to client ( we could also have parsed the data here & use xdotool to have sys-wide stuff )
+  if( theClient !== undefined && data.substr(0,3) === 'ws:' ){ // forward only websocket stuff, not all the stuff printed on serial console
+     socket.emit('message', data.substr(3) ); // forward any serial data to websockets as 'message' evt 
   }
 });
 
