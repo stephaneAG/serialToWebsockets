@@ -11,7 +11,7 @@
 var wsmouse = require("WSMouse");
 
 setWatch(function() {
-  mouse.send(20,20,wsmouse.BUTTONS.NONE, 0); // X movement, Y movement, buttons pressed, scrollwheel mvmt
+  wsmouse.send(20,20,wsmouse.BUTTONS.NONE, 0); // X movement, Y movement, buttons pressed, scrollwheel mvmt
 }, BTN, {debounce:100,repeat:true, edge:"rising"});
 ```
 
