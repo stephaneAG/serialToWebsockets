@@ -32,6 +32,107 @@
               else return btn; // Right btn
             }
             
+            // reverse key map ( so as to keep the original key values untouched for debugging puroses )
+            var revKeyMap = {
+              '4': 97,    // A
+              '5': 98,    // B
+              '6': 99,    // C
+              '7': 100,   // D
+              '8': 101,   // E
+              '9': 102,   // F
+              '10': 103,  // G
+              '11': 104,  // H
+              '12': 105,  // I
+              '13': 106,  // J
+              '14': 107,  // K
+              '15': 108,  // L
+              '16': 109,  // M
+              '17': 110,  // N
+              '18': 111,  // O
+              '19': 112,  // P
+              '20': 113,  // Q
+              '21': 114,  // R
+              '22': 115,  // S
+              '23': 116,  // T
+              '24': 117,  // U
+              '25': 118,  // V
+              '26': 119,  // W
+              '27': 120,  // X
+              '28': 121,  // Y
+              '29': 122,  // Z
+              '30': 49,   // 1
+              '31': 50,   // 2
+              '32': 51,   // 3
+              '33': 52,   // 4
+              '34': 53,   // 5
+              '35': 54,   // 6
+              '36': 55,   // 7
+              '37': 56,   // 8
+              '38': 57,   // 9
+              '39': 48,   // 0
+              '40': 13,   //  ENTER
+              //'40': ,   // "\n"
+              //'41': ,   // ESC
+              //'42': ,   // BACKSPACE        
+              //'43': ,   // "\t"
+              '44': 32,   // " "
+              '45': 45,   // "-"
+              '46': 61,   // "="
+              '47': 91,   // "["
+              '48': 93,   // "]"
+              '49': 92,   // "\\"
+              //'50': ,   // NUMBER
+              '51': 59,   // ";"
+              '52': 39,   // "'"
+              '53': 126,   // "~"
+              '54': 44,   // ","
+              '55': 46,   // "."
+              '56': 47,   // "/"
+              //'57': ,   // CAPS_LOCK
+              //'58': ,   // F1
+              //'59': ,   // F2
+              //'60': ,   // F3
+              //'61': ,   // F4
+              //'62': ,   // F5
+              //'63': ,   // F6
+              //'64': ,   // F7
+              //'65': ,   // F8
+              //'66': ,   // F9
+              //'67': ,   // F10
+              //'68': ,   // F11
+              //'69': ,   // F12
+              //'70': ,   // PRINTSCREEN
+              //'71': ,   // SCROLL_LOCK
+              //'72': ,   // PAUSE
+              //'73': ,   // INSERT
+              //'74': ,   // HOME
+              //'75': ,   // PAGE_UP
+              '76': 127,  // DELETE
+              //'77': ,   // END
+              //'78': ,   // PAGE_DOWN
+              '79': 39,   // RIGHT - keydown only
+              '80': 37,   // LEFT - keydown only
+              '81': 40,   // DOWN - keydown only
+              '82': 38,   // UP - keydown only
+              //'83': ,   // NUM_LOCK
+              //'84': ,   // PAD_SLASH
+              //'85': ,   // PAD_ASTERIX
+              //'86': ,   // PAD_MINUS
+              //'87': ,   // PAD_PLUS
+              //'88': ,   // PAD_ENTER
+              //'89': ,   // PAD_1
+              //'90': ,   // PAD_2
+              //'91': ,   // PAD_3
+              //'92': ,   // PAD_4
+              //'93': ,   // PAD_5
+              //'94': ,   // PAD_6
+              //'95': ,   // PAD_7
+              //'96': ,   // PAD_8
+              //'97': ,   // PAD_9
+              //'98': ,   // PAD_0
+              //'99':     // PAD_PERIOD
+            };
+            
             var socket = io.connect('http://localhost:8080');
 
             // data = 'test';
@@ -79,22 +180,32 @@
                   var wsKeyboardEvtData = dataObj[ Object.keys(dataObj)[0] ];
                   var wsKeyboardData = { modifiers: wsKeyboardEvtData[0], key: wsKeyboardEvtData[1] };
                   console.log('wsKeyboardData: ' + wsKeyboardData);
-                  var wsKeyboardKey = wsKeyboardKeysMap( wsKeyboardData.key ); // /!\ either re-write export.KEYS or write another 'mapping' fcn
-                  // TODO: parse the bitwise-mapped modifiers
+                  //var wsKeyboardKey = wsKeyboardKeysMap( wsKeyboardData.key ); // /!\ either re-write export.KEYS or write another 'mapping' fcn
+                  // if key === 0, we have a keyup event, else we map the key
+                  var keyEvtType = undefined;
+                  var revMapKey = undefined;
+                  if( wsKeyboardData.key.toString() in revKeyMap ){
+                    console.log('mapped keyCode: ' + revKeyMap[ wsKeyboardData.key.toString() ] );
+                    keyEvtType = 'keydown';
+                    revMapKey = revKeyMap[ wsKeyboardData.key.toString() ];
+                  } else {
+                    console.log('key === 0');
+                    keyEvtType = 'keyup';
+                  }
                     
-                  // TODO: simulate a key evt ( press, release, )
+                  // TODO: simulate a key evt ( keydown, keypress, keyup )
                   var keyboardEvent = document.createEvent('KeyboardEvent');
                   keyboardEvent.initKeyEvent(
-                    "keypress", // typeArg,                                                           
-                    true, // canBubbleArg,                                                        
-                    true, // cancelableArg,                                                       
+                    keyEvtType, // typeArg ( keydown, keyup, keypress )                                                        
+                    true, // canBubbleArg
+                    true, // cancelableArg
                     null, // viewArg,  Specifies UIEvent.view. This value may be null.     
-                    false, // ctrlKeyArg,                                                               
-                    false, // altKeyArg,                                                        
-                    false, // shiftKeyArg,                                                      
-                    false, // metaKeyArg,                                                       
-                    9, // keyCodeArg,                                                      
-                    0 // charCodeArg
+                    !!((wsKeyboardData.modifiers>>0) & 1), // ctrlKeyArg ( true || false )
+                    !!((wsKeyboardData.modifiers>>2) & 1), // altKeyArg  ( true || false )
+                    !!((wsKeyboardData.modifiers>>1) & 1), // shiftKeyArg  ( true || false )
+                    !!((wsKeyboardData.modifiers>>3) & 1), // metaKeyArg  ( true || false )
+                    revMapKey, // keyCodeArg ( num representing the key on keyboard )
+                    0 // charCodeArg ( num representing the unicode char of key on keyboard )
                   );
                   document.dispatchEvent(keyboardEvent);
                 
