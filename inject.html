@@ -15,6 +15,15 @@
         <!-- <script src="/socket.io/socket.io.js"></script> --> <!-- when served from nodejs server -->
         <script src="http://localhost:8080/socket.io/socket.io.js"></script> <!-- when injected into a page not served by nodejs server -->
         <script>
+            // store mouse x,y position
+            // updated by moving the cursor using a laptop's trackpad
+            // or by receiving wsmouse inputs
+            var mousePosition = { x: 0, y: 0 };
+            // allow updating mouse position using laptop trackpad ( !== wsmouse inputs )
+            document.addEventListener('mousemove', function(e){
+              mousePosition = { x: e.clientX, y: e.clientY};
+            });
+            
             var socket = io.connect('http://localhost:8080');
 
             // data = 'test';
@@ -25,26 +34,52 @@
                 console.log('server message : ' + message);
                 // parse the coming data
                 var dataObj = JSON.parse(data);
-                if(Object.keys(dataObj)[0] === 'wsmouse.send'){
+                if(Object.keys(dataObj)[0] === 'wsmouse.send'){ // wsmouse: { 'wsmouse.send': ([btn,x,y,s] }
+                  // TODO: get current mouse position
+                  var currMousePos = mousePosition;
                   // TODO: simulate a mouse evt ( move, button click, .. )
-                } else if (Object.keys(dataObj)[0] === 'wskeyboard.tap'){
+                  var mouseEvent = document.createEvent("MouseEvents");
+                  mouseEvent.initMouseEvent(
+                    "mousemove", //event type : mousedown, mouseup, mousemove, [ click, mouseover, mouseout ].  
+                    true, //canBubble
+                    false, //cancelable
+                    window, //event's AbstractView : should be window 
+                    0, // detail : Event's mouse click count 
+                    mousePosition.x + x, // screenX
+                    mousePosition.y + y, // screenY
+                    mousePosition.x + x, // clientX
+                    mousePosition.y + y, // clientY
+                    false, // ctrlKey
+                    false, // altKey
+                    false, // shiftKey
+                    false, // metaKey 
+                    0, // button : 0 = click, 1 = middle button, 2 = right button  
+                    null // relatedTarget : Only used with some event types (e.g. mouseover and mouseout). In other cases, pass null.
+                  );
+                  document.dispatchEvent(mouseEvent);
+                  //document.querySelector('canvas').dispatchEvent(mouseEvent); // always good to remember ;)
+                    
+                } else if (Object.keys(dataObj)[0] === 'wskeyboard.tap'){ // wskeyboard: { 'wskeyboard.tap': ([modifiers,key] }
                   // TODO: simulate a key evt ( press, release, )
+                  var keyboardEvent = document.createEvent('KeyboardEvent');
+                  keyboardEvent.initKeyEvent(
+                    "keypress", // typeArg,                                                           
+                    true, // canBubbleArg,                                                        
+                    true, // cancelableArg,                                                       
+                    null, // viewArg,  Specifies UIEvent.view. This value may be null.     
+                    false, // ctrlKeyArg,                                                               
+                    false, // altKeyArg,                                                        
+                    false, // shiftKeyArg,                                                      
+                    false, // metaKeyArg,                                                       
+                    9, // keyCodeArg,                                                      
+                    0 // charCodeArg
+                  );
+                  document.dispatchEvent(keyboardEvent);
+                
                 }
-                // wsmouse:
-                // { 'wsmouse.send': ([b&7,x,y,s] }
-                // wskeyboard
-                // { 'wskeyboard.setModifiers': ([modifiers] } - won't be used ;P => should originally use 'E.sendUSBHID' ?
-                // { 'wskeyboard.tap': ([modifiers,0,key] }
-                // { 'wskeyboard.type': ([b&7,x,y,s] } - won't be used ;) => acts internally to the module
             });
             
-            // == keyboard ==
-            // setModifier
-            // tap
-            // type
             
-            // == mouse ==
-            // send
         </script>
     </body>
 </html>
