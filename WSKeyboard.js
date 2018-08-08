@@ -168,3 +168,36 @@ exports.type = function(txt, callback) {
     }
   }, 20);
 }
+
+/* == debug code ==
+
+// future 'reverse map'
+var myObj = {
+  "23": 116,
+  "8": 101,
+  "9": 102
+}
+
+var type = function(txt, callback) {
+  var intr = setInterval(function() {
+    if (!txt.length) {
+      clearInterval(intr);
+      if (callback) callback();
+    } else {
+      if (txt[0] in KEY){
+        console.log( KEY[txt[0]] ); // what 'll be sent ( actual '.tap()' fcn + modifier )
+        // what 'll be received & needs parsing
+        if( KEY[txt[0]].toString() in myObj ){
+          console.log('mapped keyCode: ' + myObj[ KEY[txt[0]].toString() ] );
+        }
+      }
+      txt = txt.substr(1);
+    }
+  }, 20);
+}
+
+type('TEF', function(){
+  console.log('done !');
+})
+
+*/
