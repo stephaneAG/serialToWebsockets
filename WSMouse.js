@@ -25,5 +25,5 @@ exports.BUTTONS = {
 };
 
 exports.send = function(x,y,b,s) {
-  console.log( JSON.stringify( { 'wsmouse.send': ([b&7,x,y,s] } ) ); // log a JSON obj to the serial to forward to websockets
+  console.log( JSON.stringify( { 'wsmouse.send': [b&7,x,y,s] } ) ); // log a JSON obj to the serial to forward to websockets
 };
