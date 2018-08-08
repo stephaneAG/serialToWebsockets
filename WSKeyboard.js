@@ -1,20 +1,20 @@
 /* 
-   Original code ( USBMouse.js )
+   Original code ( USBKeyboard.js )
    Copyright (c) 2015 Gordon Williams, Pur3 Ltd. See the file LICENSE for copying permission.
    
-   Below code ( WSMouse.js )
+   Below code ( WSKeyboard.js )
    Copyright (c) 2018 Stephane Adam Garnier, SeedsDesign. MIT license.
 */
 /* 
 
 ```
-var kb = require("USBKeyboard");
+var wskb = require("WSKeyboard");
 
 setWatch(function() {
-  kb.setModifiers(kb.MODIFY.SHIFT, function() {
-    kb.type("HELLO WORLD", function() {
-      kb.setModifiers(0, function() {
-        kb.tap(kb.KEY.ENTER); 
+  wskb.setModifiers(kb.MODIFY.SHIFT, function() {
+    wskb.type("HELLO WORLD", function() {
+      wskb.setModifiers(0, function() {
+        wskb.tap(kb.KEY.ENTER); 
       });
     });
   });
@@ -22,48 +22,9 @@ setWatch(function() {
 ```
 
 */
-E.setUSBHID({
-  reportDescriptor : [
-        0x05, 0x01,          // Usage Page (Generic Desktop),
-        0x09, 0x06,          // Usage (Keyboard),
-        0xA1, 0x01,          // Collection (Application),
-        0x75, 0x01,          //   Report Size (1),
-        0x95, 0x08,          //   Report Count (8),
-        0x05, 0x07,          //   Usage Page (Key Codes),
-        0x19, 0xE0,          //   Usage Minimum (224),
-        0x29, 0xE7,          //   Usage Maximum (231),
-        0x15, 0x00,          //   Logical Minimum (0),
-        0x25, 0x01,          //   Logical Maximum (1),
-        0x81, 0x02,          //   Input (Data, Variable, Absolute), ;Modifier byte
-        0x95, 0x01,          //   Report Count (1),
-        0x75, 0x08,          //   Report Size (8),
-        0x81, 0x03,          //   Input (Constant),                 ;Reserved byte
-        0x95, 0x05,          //   Report Count (5),
-        0x75, 0x01,          //   Report Size (1),
-        0x05, 0x08,          //   Usage Page (LEDs),
-        0x19, 0x01,          //   Usage Minimum (1),
-        0x29, 0x05,          //   Usage Maximum (5),
-        0x91, 0x02,          //   Output (Data, Variable, Absolute), ;LED report
-        0x95, 0x01,          //   Report Count (1),
-        0x75, 0x03,          //   Report Size (3),
-        0x91, 0x03,          //   Output (Constant),                 ;LED report padding
-        0x95, 0x06,          //   Report Count (6),
-        0x75, 0x08,          //   Report Size (8),
-        0x15, 0x00,          //   Logical Minimum (0),
-        0x25, 0x68,          //   Logical Maximum(104),
-        0x05, 0x07,          //   Usage Page (Key Codes),
-        0x19, 0x00,          //   Usage Minimum (0),
-        0x29, 0x68,          //   Usage Maximum (104),
-        0x81, 0x00,          //   Input (Data, Array),
-        0xc0                 // End Collection
-  ]
-});
-
   // 1 = modifiers
   // 2 = ?
   // 3..8 = key codes currently down
-
-
 var MODIFY = {
   CTRL        : 0x01,
   SHIFT       : 0x02,
@@ -185,14 +146,13 @@ var modifiers = 0;
 
 exports.setModifiers = function(m, callback) {
   modifiers = m;
-  E.sendUSBHID([modifiers,0,0,0,0,0,0,0]);
   if (callback) setTimeout(callback, 10);
 }
 
 exports.tap = function(key, callback) {
-  E.sendUSBHID([modifiers,0,key,0,0,0,0,0]);
+  console.log( JSON.stringify( { 'wskeyboard.tap': ([modifiers,key] } ) ); // log a JSON obj to the serial to forward to websockets
   setTimeout(function() { 
-    E.sendUSBHID([modifiers,0,0,0,0,0,0,0]); 
+    console.log( JSON.stringify( { 'wskeyboard.tap': ([modifiers,0] } ) ); // log a JSON obj to the serial to forward to websockets
     if (callback) setTimeout(callback, 10);
   }, 10);
 }
