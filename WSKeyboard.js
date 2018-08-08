@@ -11,10 +11,10 @@
 var wskb = require("WSKeyboard");
 
 setWatch(function() {
-  wskb.setModifiers(kb.MODIFY.SHIFT, function() {
+  wskb.setModifiers(wskb.MODIFY.SHIFT, function() {
     wskb.type("HELLO WORLD", function() {
       wskb.setModifiers(0, function() {
-        wskb.tap(kb.KEY.ENTER); 
+        wskb.tap(wskb.KEY.ENTER); 
       });
     });
   });
