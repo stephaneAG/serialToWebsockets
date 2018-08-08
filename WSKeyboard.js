@@ -150,9 +150,9 @@ exports.setModifiers = function(m, callback) {
 }
 
 exports.tap = function(key, callback) {
-  console.log( JSON.stringify( { 'wskeyboard.tap': ([modifiers,key] } ) ); // log a JSON obj to the serial to forward to websockets
+  console.log( 'ws:' + JSON.stringify( { 'wskeyboard.tap': ([modifiers,key] } ) ); // log a JSON obj to the serial to forward to websockets
   setTimeout(function() { 
-    console.log( JSON.stringify( { 'wskeyboard.tap': ([modifiers,0] } ) ); // log a JSON obj to the serial to forward to websockets
+    console.log( 'ws:' + JSON.stringify( { 'wskeyboard.tap': ([modifiers,0] } ) ); // log a JSON obj to the serial to forward to websockets
     if (callback) setTimeout(callback, 10);
   }, 10);
 }
