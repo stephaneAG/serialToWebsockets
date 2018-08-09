@@ -24,6 +24,15 @@ use either cli or Espruino board connected over serial & send data in the follow
 ws:{"wsmouse.send":[20,20,0,0]} // to send mouse events ( wsmouse.send:[x,y,btn,wheel]} )
 ws:{"wskeyboard.tap":[0,5]} // to send keyboard events ( wskeyboard.tap:[modifiers,key] )
 ```
+## cli xdotool commands
+```javascript
+xdotool click 1
+xdotool mousemove 500 500
+xdotool keydown Pointer_Button1
+xdotool mousemove_relative 0 100
+xdotool keyup Pointer_Button1
+```
+
 ### Espruino commands
 ```javascript
 // WSMouse
