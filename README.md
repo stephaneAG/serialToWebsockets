@@ -5,6 +5,15 @@ Little repo hosting some tool(s) to ease debug &amp; development
 Later on, a switch could be provided to either output to xdotool or websockets
 https://brewinstall.org/Install-xdotool-on-Mac-with-Brew/
 
+## installing the necessary modules & stuff
+- sudo npm cache clean -f
+- sudo npm install socketio
+- sudo npm install serialport
+
+## to digg if needed
+- https://www.taniarascia.com/how-to-install-and-use-node-js-and-npm-mac-and-windows/
+- https://dev.to/mohammeghq/how-to-connect-to-arduino-automatically-using-node-serialport-2e3h
+
 ## API
 
 once the server is started with ```javascript nodejs ./app.js```,
