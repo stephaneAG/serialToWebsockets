@@ -1,10 +1,13 @@
 # serialToWebsockets
-Little repo hosting some tool(s) to ease debug &amp; development 
+Little repo hosting some tool(s) to ease debug &amp; development
+
+## switching between xdotool & websockets
+Later on, a switch could be provided to either output to xdotool or websockets
+https://brewinstall.org/Install-xdotool-on-Mac-with-Brew/
 
 ## API
 
-once the server is started with ```javascript nodejs ./app.js```
-
+once the server is started with ```javascript nodejs ./app.js```,
 use either cli or Espruino board connected over serial & send data in the following format to forward it to client as inputs
 
 ### cli supported commands
