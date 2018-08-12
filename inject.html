@@ -3,27 +3,71 @@
     <head>
         <meta charset="utf-8" />
         <title>Socket.io</title>
-    </head>
- 
-    <body>
-        <h1>Communication avec socket.io !</h1>
+        <style>
+          /*
+          document {
+            pointer-events: none; /*prevents from receiving REAL input while still allowing us to pass FAKE inputs ;P * /
+          }
+          body {
+            margin: 0;
+            height: -webkit-fill-available;
+            width: -webkit-fill-available;
+          }
+          */
+          body { margin: 0; }
+          .fullscreen {
+            width: 100%;
+            height: 100%;
+            background: gray;
+            position: absolute;
+            z-index: 10;
+            pointer-events: none; /*prevents from receiving REAL input while still allowing us to pass FAKE inputs ;P */
+          }
 
-        <p><input type="button" value="Embêter le serveur" id="poke" /></p>
+          canvas {
+            border: 1px solid blue;
+            margin: 0;
+            padding: 0;
+            /*pointer-events: none;*/ /*prevents from receiving REAL input while still allowing us to pass FAKE inputs ;P */
+          }
+        </style>
+
+    </head>
+
+    <body>
+        <canvas width="500" height="500"</canvas> <!-- addition: fullscreen canvas -->
+
+        <div class='fullscreen'>
+          <h1>Serial to WebSocket mouse &ampersand; keyboard !</h1>
+
+          <p><input type="button" value="log message to server" id="poke" /></p>
+        </div>
 
 
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script src="/socket.io/socket.io.js"></script> <!-- when served from nodejs server -->
         <!-- <script src="http://localhost:8080/socket.io/socket.io.js"></script> --> <!-- when injected into a page not served by nodejs server -->
         <script>
+            // R: mouse canvas wip debug test: https://jsbin.com/xecujuxake/1/edit?css,js,console,output
+
+            // store the element on which we trigger fake mouse events ( used fo easier debugging since we can't 'pointer-events: none' on the document itself .. )
+            //var targetElement = document.querySelector('.fullscreen');
+            var targetElement = document.querySelector('canvas');
+
+            // store last mouse buttonS pressed ( to later release them in order ) - plurarl
+            // & last keybord key pressed - singular
+            var wsMouseBtnsLastPressed = [];
+            var wsKeyboardKeyLastPressed = undefined;
+
             // store mouse x,y position
             // updated by moving the cursor using a laptop's trackpad
             // or by receiving wsmouse inputs
-            var mousePosition = { x: 0, y: 0 };
+            var mousePosition = { x: 0, y: 0 }; // R: set to center of screen on window load ( to ease tests without any previous REAL mouse cursor movement with Espruino ;)
             // allow updating mouse position using laptop trackpad ( !== wsmouse inputs )
             document.addEventListener('mousemove', function(e){
               mousePosition = { x: e.clientX, y: e.clientY};
             });
-            
+
             // mouse buttons map - to convert from L: 1, R: 2, M: 4 to L: 0, R: 2, M: 1
             var wsMouseBtnsMap = function(btn){
               if(btn === 0) return -1; // None
@@ -31,7 +75,7 @@
               else if (btn === 4) return 1; // // Middle btn
               else return btn; // Right btn
             }
-            
+
             // reverse key map ( so as to keep the original key values untouched for debugging puroses )
             /* R:
             document.onkeypress= function(event){
@@ -82,7 +126,7 @@
               '40': 13,   //  ENTER
               //'40': ,   // "\n"
               //'41': ,   // ESC
-              //'42': ,   // BACKSPACE        
+              //'42': ,   // BACKSPACE
               //'43': ,   // "\t"
               '44': 32,   // " "
               '45': 45,   // "-"
@@ -141,7 +185,7 @@
               //'98': ,   // PAD_0
               //'99':     // PAD_PERIOD
             };
-            
+
             var socket = io.connect('http://localhost:8080');
 
             // data = 'test';
@@ -153,23 +197,59 @@
                 // parse the coming data
                 var dataObj = JSON.parse(data);
                 if(Object.keys(dataObj)[0] === 'wsmouse.send'){ // wsmouse: { 'wsmouse.send': ([btn,x,y,s] }
+                  console.log('server message is a wsmouse event');
+
                   // TODO: get current mouse position
                   var currMousePos = mousePosition;
-                  
+
                   // TODO: parse the wsmouse.send evt data
                   var wsMouseEvtData = dataObj[ Object.keys(dataObj)[0] ];
                   var wsMouseData = { x: wsMouseEvtData[0], y: wsMouseEvtData[1], btn: wsMouseEvtData[2], wheel: wsMouseEvtData[3] };
-                  console.log('wsMouseData: ' + wsMouseData);
+                  //console.log('wsMouseData: ' + wsMouseData);
                   var wsMouseBtn = wsMouseBtnsMap( wsMouseData.btn ); // /!\ -1 means None
-                  
+
+                  // compute mouse evt type
+                  var mouseEvtType = undefined;
+                  var mouseEvtClickCount = 0;
+                  var mouseBtn = 0;
+                  if( wsMouseData.x !== 0 || wsMouseData.y !== 0 ){
+                    // mousemove
+                    mouseEvtType = 'mousemove';
+                    if( wsMouseBtn === -1 ){
+                      // No btn: release btnS previously pressed if any
+                      //mouseBtn = (wsMouseBtnsLastPressed.length !== 0 )? wsMouseBtnsLastPressed.pop() : 0; // == original thought ==
+                      mouseBtn = 0; // not taken in account anyway during mousemove evt ?
+                    } else {
+                      // Btn: set it & set evt click count to 1
+                      //mouseEvtClickCount = 1; // == original thought ==
+                      //mouseBtn = wsMouseBtn; // == original thought ==
+                      //wsMouseBtnsLastPressed.push(mouseBtn); // == original thought ==
+                      mouseBtn = 0;
+                    }
+                  } else {
+                    // mouseup || mousedown
+                    if( wsMouseBtn === -1 ){
+                      // No btn: release btnS previously pressed if any
+                      mouseEvtType = 'mouseup';
+                      mouseBtn = (wsMouseBtnsLastPressed.length !== 0 )? wsMouseBtnsLastPressed.pop() : 0;
+                    } else {
+                      // Btn: set it & set evt click count to 1
+                      mouseEvtType = 'mousedown';
+                      mouseEvtClickCount = 1;
+                      mouseBtn = wsMouseBtn;
+                      wsMouseBtnsLastPressed.push(mouseBtn);
+                    }
+                  }
+                  //console.log(' a little log ? ..');
+
                   // TODO: simulate a mouse evt ( move, button click, .. )
                   var mouseEvent = document.createEvent("MouseEvents");
                   mouseEvent.initMouseEvent(
-                    "mousemove", //event type : mousedown, mouseup, mousemove, [ click, mouseover, mouseout ].  
+                    mouseEvtType, //event type : mousedown, mouseup, mousemove, [ click, mouseover, mouseout ].
                     true, //canBubble
                     false, //cancelable
-                    window, //event's AbstractView : should be window 
-                    0, // detail : Event's mouse click count 
+                    window, //event's AbstractView : should be window
+                    mouseEvtClickCount, // detail : Event's mouse click count
                     mousePosition.x + wsMouseData.x, // screenX
                     mousePosition.y + wsMouseData.y, // screenY
                     mousePosition.x + wsMouseData.x, // clientX
@@ -177,38 +257,70 @@
                     false, // ctrlKey
                     false, // altKey
                     false, // shiftKey
-                    false, // metaKey 
-                    0, // button : 0 = left button, 1 = middle button, 2 = right button  
+                    false, // metaKey
+                    mouseBtn, // button : 0 = left button, 1 = middle button, 2 = right button
                     null // relatedTarget : Only used with some event types (e.g. mouseover and mouseout). In other cases, pass null.
                   );
-                  document.dispatchEvent(mouseEvent);
+                  //document.dispatchEvent(mouseEvent);
+                  targetElement.dispatchEvent(mouseEvent);
+                  /*
+                  setTimeout(function(){
+                    console.log('4s delayed dispatch event for mouse ..');
+                    targetElement.dispatchEvent(mouseEvent);
+                  }, 4000); // debug - give me enough time to focus back the browser window when I just hit enter on the cli ;)
+                  */
                   //document.querySelector('canvas').dispatchEvent(mouseEvent); // always good to remember ;)
-                    
+
                 } else if (Object.keys(dataObj)[0] === 'wskeyboard.tap'){ // wskeyboard: { 'wskeyboard.tap': ([modifiers,key] }
+                  console.log('server message is a wskeyboard event');
+
                   // TODO: parse the wskeyboard.tap evt data
                   var wsKeyboardEvtData = dataObj[ Object.keys(dataObj)[0] ];
-                  var wsKeyboardData = { modifiers: wsKeyboardEvtData[0], key: wsKeyboardEvtData[1] };
+                  var wsKeyboardData = { modifiers: Number(wsKeyboardEvtData[0]), key: wsKeyboardEvtData[1] };
                   console.log('wsKeyboardData: ' + wsKeyboardData);
                   //var wsKeyboardKey = wsKeyboardKeysMap( wsKeyboardData.key ); // /!\ either re-write export.KEYS or write another 'mapping' fcn
                   // if key === 0, we have a keyup event, else we map the key
                   var keyEvtType = undefined;
-                  var revMapKey = undefined;
+                  var revMapKeyCode = undefined;
+                  var actualKey = undefined;
                   if( wsKeyboardData.key.toString() in revKeyMap ){
                     console.log('mapped keyCode: ' + revKeyMap[ wsKeyboardData.key.toString() ] );
                     keyEvtType = 'keydown';
-                    revMapKey = revKeyMap[ wsKeyboardData.key.toString() ];
+                    revMapKeyCode = revKeyMap[ wsKeyboardData.key.toString() ];
+                    actualKey = String.fromCharCode(revMapKeyCode).toLowerCase(); // little mod since I took the uppercase letters codes ?
+                    //revMapKeyCode -= 32; // .. implicit way of upper -> lower case
+                    // if the key maps to [a..z], check if the shift key is present in the modifiers, & if so, uppercase the char to [A..Z]
+                    console.log('typeof revMapKeyCode: ' + typeof revMapKeyCode);
+                    console.log('typeof wsKeyboardData.modifiers: ' + typeof wsKeyboardData.modifiers);
+                    var modifierContainsShift = !!((wsKeyboardData.modifiers>>1) & 1);
+                    //if( modifierContainsShift && revMapKeyCode >= 97 && revMapKeyCode <= 122 ){ / / couldn't get it to work :/ .. ?!
+                    if( modifierContainsShift ){
+                      console.log( 'current modifiers: 0b' + wsKeyboardData.modifiers.toString(2) );
+                      console.log('current modifier === 0x02/0b10');
+                      if(revMapKeyCode >= 97 && revMapKeyCode <= 122){
+                        console.log('revMapKeyCode within [97..122]');
+                        //revMapKeyCode -= 32; // .. implicit way ;p
+                        actualKey = String.fromCharCode(revMapKeyCode).toUpperCase();
+                      }
+                      //revMapKey = String.fromCharCode(revMapKey).toUpperCase().charCodeAt(0); // explicit way ..
+                      //revMapKey -= 32; // .. implicit way ;p
+                    } else {
+                      console.log( 'current modifiers: 0b' + wsKeyboardData.modifiers.toString(2) );
+                      console.log('revMapKeyCode not within [97..122] or current modifier !== 0x02/0b10');
+                    }
                   } else {
                     console.log('key === 0');
                     keyEvtType = 'keyup';
                   }
-                    
+
                   // TODO: simulate a key evt ( keydown, keypress, keyup )
+                  /*
                   var keyboardEvent = document.createEvent('KeyboardEvent');
                   keyboardEvent.initKeyboardEvent(
-                    keyEvtType, // typeArg ( keydown, keyup, keypress )                                                        
+                    keyEvtType, // typeArg ( keydown, keyup, keypress )
                     true, // canBubbleArg
                     true, // cancelableArg
-                    null, // viewArg,  Specifies UIEvent.view. This value may be null.     
+                    null, // viewArg,  Specifies UIEvent.view. This value may be null.
                     !!((wsKeyboardData.modifiers>>0) & 1), // ctrlKeyArg ( true || false )
                     !!((wsKeyboardData.modifiers>>2) & 1), // altKeyArg  ( true || false )
                     !!((wsKeyboardData.modifiers>>1) & 1), // shiftKeyArg  ( true || false )
@@ -217,13 +329,242 @@
                     0 // charCodeArg ( num representing the unicode char of key on keyboard )
                   );
                   document.dispatchEvent(keyboardEvent);
-                
+                  */
+                  //var e = new Event("keydown");
+                  var e = new Event(keyEvtType);
+                  //e.key="a";    // just enter the char you want to send
+                  //e.keyCode=e.key.charCodeAt(0);
+                  e.key = actualKey; //String.fromCharCode(revMapKeyCode); //.toLowerCase(); // ex: 84
+                  e.keyCode = e.key.charCodeAt(0); //84;
+                  e.which = e.keyCode;
+                  e.altKey = !!((wsKeyboardData.modifiers>>2) & 1);
+                  e.ctrlKey = !!((wsKeyboardData.modifiers>>0) & 1);
+                  e.shiftKey = !!((wsKeyboardData.modifiers>>1) & 1);
+                  e.metaKey = !!((wsKeyboardData.modifiers>>3) & 1);
+                  e.bubbles = true;
+                  targetElement.dispatchEvent(e);
+
                 }
             });
-            
+
+
             // quickly test server logs
             var testBtn = document.querySelector('input');
-            testBtn.click = function(){ socket.emit('message', 'test btn clicked in served webpage inject.html !') };
+            testBtn.onclick = function(){
+              console.clear(); // clear REAL mouse movements & clicks logs ..
+              socket.emit('message', 'test btn clicked in served webpage inject.html !');
+            };
+
+            // == mouse events debug ==
+            var mouseEventHandler = function(event, type){
+              var btn = '';
+              if( event.button == 0) btn = 'left click ( '+event.button+' )';
+              else if( event.button == 1) btn = 'middle click ( '+event.button+' )';
+              else if ( event.button == 2) btn = 'right click ( '+event.button+' )';
+              console.log(type + ' button: ' + btn);
+            }
+
+            targetElement.addEventListener('mousemove', function(event){
+              mouseEventHandler(event, 'mousemove');
+            });
+            targetElement.addEventListener('mousedown', function(event){
+              mouseEventHandler(event, 'mousedown');
+            });
+            targetElement.addEventListener('mouseup', function(event){
+              mouseEventHandler(event, 'mouseup');
+            });
+
+
+            // == keyboard events debug ==
+            var keyboardEventHandler = function(event, type){
+              event = event || window.event;
+              var keyCode = event.which || event.keyCode;
+              var typedChar = String.fromCharCode(keyCode);
+              var key = event.key;
+              console.log(type + ' keyCode: ' + keyCode + ' => ' + key)
+            }
+
+            targetElement.onkeypress = function(event){
+              keyboardEventHandler(event, '[ keypress ]');
+            }
+            targetElement.onkeydown = function(event){
+              keyboardEventHandler(event, '[ keydown ]');
+            }
+            targetElement.onkeyup = function(event){
+              keyboardEventHandler(event, '[ keyup ]');
+            }
+
+
+
+
+
+            /* ==== canvas-specific code ==== */
+            // refs
+            var cnvs = document.querySelector('canvas');
+            var ctx = cnvs.getContext('2d');
+
+            // pointer
+            //var targetElement = cnvs; // var targetElement = document.querySelector('.fullscreen'); is already done wayyy above ;P
+
+            // mouse btns bitmask
+            var mouseBtnsBitMask = 0b000;
+
+            var dotColorRgb = { r: 0, g: 0, b: 0};
+            var dotColorHsl = { h: 0, s: 100, l: 50}; // std: [0..360], 100%, 50%
+
+            // handlers
+            var mouseEventHandler = function(event, type){
+              var btn = '';
+              if( event.button == 0) btn = 'left click ( '+event.button+' )';
+              else if( event.button == 1) btn = 'middle click ( '+event.button+' )';
+              else if ( event.button == 2) btn = 'right click ( '+event.button+' )';
+              console.log(type + ' button: ' + btn);
+            }
+
+            // "special" handler for mousemove
+            var lastMousePos = {x: -1, y: -1};
+            var currMousePos = {x: 0, y: 0};
+            function getMousePos(canvas, evt) {
+              var rect = canvas.getBoundingClientRect();
+              return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+              };
+            }
+
+            targetElement.addEventListener('mousemove', function(event){
+              //mouseEventHandler(event, 'mousemove');
+              currMousePos = getMousePos(cnvs, event);
+              // draw colored dot
+              //drawColoredDot(ctx, currMousePos.x, currMousePos.y, mouseBtnsBitMask);
+            });
+            targetElement.addEventListener('mousedown', function(event){
+              //mouseEventHandler(event, 'mousedown');
+              // reset bitmask ( as I'll try stg different now: each mousedown has its own color )
+              //mouseBtnsBitMask = 0b000;
+              // update bitmask
+              mouseBtnsBitMask = mouseBtnsBitMask | (1<<event.button); // set n bit
+              console.log('current mouse btn bitmask: 0b' + mouseBtnsBitMask.toString(2) );
+            });
+            targetElement.addEventListener('mouseup', function(event){
+              //mouseEventHandler(event, 'mouseup');
+              // update bitmask
+              mouseBtnsBitMask = mouseBtnsBitMask & ~(1<<event.button); // unset n bit
+              lastMousePos.x = lastMousePos.y = -1;
+            });
+
+            // get back right click
+            targetElement.addEventListener('contextmenu', function(evt) {
+              evt.preventDefault();
+            }, false);
+
+            // colored dot drawing helper
+            var drawColoredDot = function(ctx, x, y, colorBitMask){
+              ctx.beginPath();
+              ctx.arc(x, y, 5, 0, Math.PI*2);
+              //ctx.fillStyle = 'rgb('+dotColorRgb.r + ', ' + dotColorRgb.g + ',' + dotColorRgb.b+')';
+              ctx.fillStyle = 'hsl('+dotColorHsl.h + ', ' + dotColorHsl.s + '%,' + dotColorHsl.l+'%)';
+              //ctx.fillStyle = 'red';
+              ctx.fill();
+              ctx.closePath();
+            }
+            // line version of the above
+            // Draws a line between the specified position on the supplied canvas name
+            // Parameters are: A canvas context, the x position, the y position, the size of the dot
+            function drawLine(ctx,x,y,size) {
+              // If lastX is not set, set lastX and lastY to the current position
+              if (lastMousePos.x==-1) {
+                lastMousePos.x=x;
+            	lastMousePos.y=y;
+              }
+
+              // Let's use black by setting RGB values to 0, and 255 alpha (completely opaque)
+              r=0; g=0; b=0; a=255;
+
+              // Select a fill style
+              //ctx.strokeStyle = "rgba("+r+","+g+","+b+","+(a/255)+")";
+              //ctx.strokeStyle = 'rgb('+dotColorRgb.r + ', ' + dotColorRgb.g + ',' + dotColorRgb.b+')';
+              ctx.strokeStyle = 'hsl('+dotColorHsl.h + ', ' + dotColorHsl.s + '%,' + dotColorHsl.l+'%)';
+              // Set the line "cap" style to round, so lines at different angles can join into each other
+              ctx.lineCap = "round";
+              //ctx.lineJoin = "round";
+
+
+              // Draw a filled line
+              ctx.beginPath();
+              // First, move to the old (previous) position
+              ctx.moveTo(lastMousePos.x,lastMousePos.y);
+              // Now draw a line to the current touch/pointer position
+              ctx.lineTo(x,y);
+              // Set the line thickness and draw the line
+              ctx.lineWidth = size;
+              ctx.stroke();
+              ctx.closePath();
+
+              // Update the last position to reference the current position
+              lastMousePos.x=x;
+              lastMousePos.y=y;
+            }
+
+
+            // animFrame
+            var animFrame = function(){
+              requestAnimationFrame(animFrame);
+              var mousePos = currMousePos;
+              //context.clearRect(0, 0, canvas.width, canvas.height);
+
+              // draw if we have at least one mouse btn currently down
+              if(mouseBtnsBitMask !== 0){
+                // update dot color from btn down bitmask
+                // using rgb
+                /*
+                dotColorRgb.r = (mouseBtnsBitMask & (1<<0) != 0) ? 255 : 0;
+                dotColorRgb.g = (mouseBtnsBitMask & (1<<1) != 0) ? 255 : 0;
+                dotColorRgb.b = (mouseBtnsBitMask & (1<<2) != 0) ? 255 : 0;
+                */
+                // now usin hsl
+                /*
+                dotColorHsl.h = ( (mouseBtnsBitMask & (1<<0) != 0) ? 120 : 0 ) +
+                             ( (mouseBtnsBitMask & (1<<1) != 0) ? 120 : 0 ) +
+                             ( (mouseBtnsBitMask & (1<<2) != 0) ? 120 : 0 ) +
+                */
+                // trying stg else: setting the color depending on the mouse btn currently down
+                /*
+                if(mouseBtnsBitMask & (1<<0) != 0) dotColorHsl.h = 0;
+                if(mouseBtnsBitMask & (1<<1) != 0) dotColorHsl.h = 120;
+                if(mouseBtnsBitMask & (1<<2) != 0) dotColorHsl.h = 240;
+                */
+                if(mouseBtnsBitMask === 0b1)  dotColorHsl.h = 0;
+                else if(mouseBtnsBitMask === 0b10)  dotColorHsl.h = 120;
+                else if(mouseBtnsBitMask === 0b100)  dotColorHsl.h = 240;
+
+                // draw colored dot
+                //drawColoredDot(ctx, mousePos.x, mousePos.y, mouseBtnsBitMask);
+                // and line
+                drawLine(ctx, mousePos.x, mousePos.y, 5);
+              }
+            }
+            animFrame();
+
+
+            // resize canvas on window loaded
+            window.addEventListener('load', function(evt){
+              cnvs.width = window.innerWidth;
+              cnvs.height = window.innerHeight;
+              // quick debug / ease for Espruino fake mouse movements ..
+              //lastMousePos.x = cnvs.width/2;
+              //lastMousePos.y = cnvs.height/2;
+              mousePosition.x = cnvs.width/2;
+              mousePosition.y = cnvs.height/2;
+              console.log('canvas size: ' + cnvs.width + ',' + cnvs.height + ' center: ' + cnvs.width/2 + ',' + cnvs.height/2 );
+            });
+
+            // resize canvas on window resize
+            window.addEventListener('resize', function(evt){
+              cnvs.width = window.innerWidth;
+              cnvs.height = window.innerHeight;
+              console.log('canvas size: ' + cnvs.width + ',' + cnvs.height + ' center: ' + cnvs.width/2 + ',' + cnvs.height/2 );
+            });
         </script>
     </body>
 </html>
