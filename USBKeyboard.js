@@ -175,12 +175,15 @@ var KEY = {
 exports.KEY = KEY;
 exports.MODIFY = MODIFY;
 
-// toggle between azerty & qwerty mappings, get current mapping
-// the 1st one didn't work for some reason
-//exports.toggleMapping = function(){ [ KEY.A, KEY.Q, KEY.Z, KEY.W ] = [ KEY.Q, KEY.A, KEY.W, KEY.Z ]; };/
+//  == toggle between azerty & qwerty mappings, get current mapping ==
+// the 1st one ( the one below ) didn't work for some reason
+//exports.toggleMapping = function(){ [ KEY.A, KEY.Q, KEY.Z, KEY.W ] = [ KEY.Q, KEY.A, KEY.W, KEY.Z ]; };
+// simple version, without getCurrentMapping() support
 //exports.toggleMapping = function(){ KEY.Q = [ KEY.A, KEY.A=KEY.Q][0]; KEY.W = [ KEY.Z, KEY.Z=KEY.W][0]; };
+// "fullest" version
 var mappings = [ 'qwerty', 'azerty' ];
 var currentMapping = 0;
+// R: https://stackoverflow.com/questions/14787761/convert-true-1-and-false-0-in-javascript
 exports.toggleMapping = function(){ KEY.Q = [ KEY.A, KEY.A=KEY.Q][0]; KEY.W = [ KEY.Z, KEY.Z=KEY.W][0]; currentMapping = +!currentMapping; };
 exports.getCurrentMapping = function(){  return mappings[currentMapping]; };
 
