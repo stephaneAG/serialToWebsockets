@@ -101,7 +101,7 @@ setWatch(function() {
 
 
 // ==== keyboard debug ====
-/**/
+/*
 var timeoutSpeed = 20; // 15 seems to be minimum,20 for reliable over websockets ?
 setWatch(function() {
   LED1.toggle();
@@ -112,4 +112,55 @@ setWatch(function() {
     LED1.toggle();
   }, timeoutSpeed);
 }, BTN, {debounce:100,repeat:true, edge:"rising"});
-/**/
+*/
+// R: use 'println' instead of 'console.log' to NOT get "weird chars prefix" for parsing
+/*
+var println = function(msg){print(msg+'\r\n');};
+var timeoutSpeed = 20; // 15 seems to be minimum,20 for reliable over websockets ?
+setWatch(function() {
+  LED1.toggle();
+  //console.log('ws:{"wskeyboard.tap":[0,'+4+']}');// - keydown key 'a'
+  println('ws:{"wskeyboard.tap":[2,'+4+']}');// - keydown key 'A'
+  setTimeout(function(){
+    println('ws:{"wskeyboard.tap":[0,'+0+']}');// - keyup key 'a'
+    LED1.toggle();
+  }, timeoutSpeed);
+}, BTN, {debounce:100,repeat:true, edge:"rising"});
+*/
+
+
+
+// ==== keyboard debug ( official Espruino module ) ====
+// TODO: fix qwerty/azerty stuff at 1st, then maybe add to supported keys ?
+/*
+var kb = require("USBKeyboard");
+//kb.toggleMapping = function(){ [ kb.KEY.A, kb.KEY.Q, kb.KEY.Z, kb.KEY.W ] = [ kb.KEY.Q, kb.KEY.A, kb.KEY.W, kb.KEY.Z ]; };
+kb.toggleMapping = function(){
+  kb.KEY.Q = [ kb.KEY.A, kb.KEY.A=kb.KEY.Q][0];
+  kb.KEY.W = [ kb.KEY.Z, kb.KEY.Z=kb.KEY.W][0];
+};
+kb.toggleMapping(); // from default qwerty to azerty
+setWatch(function() {
+  kb.setModifiers(kb.MODIFY.SHIFT, function() {
+    LED1.toggle();
+    //kb.type("A", function() { // gives me a 'Q' ?
+    //kb.type("HELLO WORLD !", function() { // gives me a 'HELLO ZORLD' ?
+    kb.type("AZERTY", function() { // gives me a 'QWERTY' ?
+      kb.setModifiers(0, function() {
+        kb.tap(kb.KEY.ENTER);
+        LED1.toggle();
+      });
+    });
+  });
+}, BTN, {debounce:100,repeat:true, edge:"rising"});
+*/
+
+
+// ==== mouse debug ( official Espruino module ) ====
+/*
+var mouse = require("USBMouse");
+// When the button is pressed, move the mouse south-east by 20px
+setWatch(function() {
+  mouse.send(20, 20, mouse.BUTTONS.NONE); // X movement, Y movement, buttons pressed
+}, BTN, {debounce:100,repeat:true, edge:"rising"});
+*/
