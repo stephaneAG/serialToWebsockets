@@ -42,4 +42,6 @@ wskeyboard.setModifiers(modifiers, callback)
 wskeyboard.tap = (key, callback)
 wskeyboard.type(txt, callback)
 
+// for the USBKeyboard2 module
+kb.htype(txt, callback)
 ```
